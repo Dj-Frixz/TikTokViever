@@ -49,20 +49,39 @@
             padding: 0.7rem 1.2rem;
             background: #6366f1;
             color: #fff;
-            border: none;
+            border: 2px solid #6366f1;
             border-radius: 0.7rem;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.2s;
         }
         button:hover {
             background: #4f46e5;
+        }
+        button.toggled {
+            background: #fff;
+            color: #6366f1;
         }
         .error {
             color: #ef4444;
             font-size: 0.98rem;
             margin-top: 0.5rem;
             min-height: 1.2em;
+        }
+        .check-label {
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
+            font-size: 1rem;
+            color: #6366f1;
+            font-weight: 500;
+            margin-right: 0.5em;
+        }
+        .check {
+            accent-color: #6366f1;
+            width: 1.1em;
+            height: 1.1em;
+            margin: 0;
         }
     </style>
 </head>
@@ -71,25 +90,48 @@
         <h1>TikTok Viewer</h1>
         <form id="tiktokForm" autocomplete="off">
             <input type="text" id="tiktokLink" placeholder="Paste TikTok link here..." required>
+            <button type="button" id="toggleVersion">v3</button>
             <button type="submit">Go</button>
         </form>
-        <div class="error" id="errorMsg"></div>
+    <!-- No custom error message needed; using browser validation -->
     </div>
     <script>
         const form = document.getElementById('tiktokForm');
         const input = document.getElementById('tiktokLink');
-        const errorMsg = document.getElementById('errorMsg');
+        const toggleBtn = document.getElementById('toggleVersion');
+        let isV3 = true;
+
+        toggleBtn.addEventListener('click', function() {
+            isV3 = !isV3;
+            if (isV3) {
+                toggleBtn.textContent = 'v3';
+                toggleBtn.classList.remove('toggled');
+            } else {
+                toggleBtn.textContent = 'v2';
+                toggleBtn.classList.add('toggled');
+            }
+        });
 
         form.addEventListener('submit', function(e) {
+            const link = decodeURIComponent(input.value.trim());
+            if (!link) {
+                // Let browser show its own required field message
+                return;
+            }
             e.preventDefault();
-            errorMsg.textContent = '';
-            const link = input.value.trim();
-            const match = link.match(/(?<=[vp][ih][do][et]o%2F)\d+/);
+            const match = link.match(/(?<=[vp][ih][do][et]o\/)\d+/);
             if (match) {
                 const id = match[0];
-                window.location.href = "https://www.tiktok.com/embed/v2/" + id;
+                const version = isV3 ? 'v3' : 'v2';
+                window.location.href = `https://www.tiktok.com/embed/${version}/${id}`;
+            } else if (link.match(/vm.tiktok/)) {
+                input.setCustomValidity("TikTok link not yet supported. Please paste it in a browser and copy the url from there.");
+                input.reportValidity();
+                setTimeout(() => input.setCustomValidity(''), 2000);
             } else {
-                errorMsg.textContent = "Invalid TikTok link. Please try again.";
+                input.setCustomValidity("Invalid TikTok link. Please try again.");
+                input.reportValidity();
+                setTimeout(() => input.setCustomValidity(''), 2000);
             }
         });
     </script>
